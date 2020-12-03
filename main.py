@@ -26,16 +26,16 @@ int_list = cleaning_tools.convertStrListtoIntList(cik_filter.cik_list)
 total_obs = 0
 d_master_word_count = {}
 d_master_word_pct = {}
-d_lm_neg_master_count = linguistic_tools.countAllWordsInWordList(lm_neg_wordlist.lm_negative, {})
-d_lm_neg_master_pct = linguistic_tools.countAllWordsInWordList(lm_neg_wordlist.lm_negative, {})
-d_lm_pos_master_count = linguistic_tools.countAllWordsInWordList(lm_positive.lm_positive, {})
-d_lm_pos_master_pct = linguistic_tools.countAllWordsInWordList(lm_positive.lm_positive, {})
-d_lm_uncertain_master_count = linguistic_tools.countAllWordsInWordList(lm_uncertain.lm_uncertain, {})
-d_lm_uncertain_master_pct = linguistic_tools.countAllWordsInWordList(lm_uncertain.lm_uncertain, {})
-d_lm_litigous_master_count = linguistic_tools.countAllWordsInWordList(lm_litigous.lm_litigous, {})
-d_lm_litigous_master_pct = linguistic_tools.countAllWordsInWordList(lm_litigous.lm_litigous, {})
-d_lm_harvard_master_count = linguistic_tools.countAllWordsInWordList(harvard_wordlist.harvard_neg, {})
-d_lm_harvard_master_pct = linguistic_tools.countAllWordsInWordList(harvard_wordlist.harvard_neg, {})
+d_lm_neg_master_count = linguistic_tools.constructWordlistFrequency(lm_neg_wordlist.lm_negative, {'':''})
+d_lm_neg_master_pct = linguistic_tools.constructWordlistFrequency(lm_neg_wordlist.lm_negative, {'':''})
+d_lm_pos_master_count = linguistic_tools.constructWordlistFrequency(lm_positive.lm_positive, {'':''})
+d_lm_pos_master_pct = linguistic_tools.constructWordlistFrequency(lm_positive.lm_positive, {'':''})
+d_lm_uncertain_master_count = linguistic_tools.constructWordlistFrequency(lm_uncertain.lm_uncertain, {'':''})
+d_lm_uncertain_master_pct = linguistic_tools.constructWordlistFrequency(lm_uncertain.lm_uncertain, {'':''})
+d_lm_litigous_master_count = linguistic_tools.constructWordlistFrequency(lm_litigous.lm_litigous, {'':''})
+d_lm_litigous_master_pct = linguistic_tools.constructWordlistFrequency(lm_litigous.lm_litigous, {'':''})
+d_lm_harvard_master_count = linguistic_tools.constructWordlistFrequency(harvard_wordlist.harvard_neg, {'':''})
+d_lm_harvard_master_pct = linguistic_tools.constructWordlistFrequency(harvard_wordlist.harvard_neg, {'':''})
 
 def updateMasterCountDictionaries(d_master, d_file):
     for key, value in d_file.items():
@@ -55,7 +55,19 @@ for file in tqdm(filelist):
             f.seek(0)
             full_text = f.read()
             cleaned_text = linguistic_tools.parse_document(full_text, purge_tables=True)
+            f_words = linguistic_tools.wordFrequency(cleaned_text)
+            f_neg = linguistic_tools.constructWordlistFrequency(lm_neg_wordlist.lm_negative, f_words)
+            f_pos = linguistic_tools.constructWordlistFrequency(lm_positive.lm_positive, f_words)
+            f_litigous = linguistic_tools.constructWordlistFrequency(lm_litigous.lm_litigous, f_words)
+            f_uncertain = linguistic_tools.constructWordlistFrequency(lm_uncertain.lm_uncertain, f_words)
+            f_harvard = linguistic_tools.constructWordlistFrequency(harvard_wordlist.harvard_neg, f_words)
 
+            linguistic_tools.updateDictionary(d_lm_uncertain_master_count, f_uncertain)
+            linguistic_tools.updateDictionary(d_lm_pos_master_count, f_pos)
+            linguistic_tools.updateDictionary(d_lm_neg_master_count, f_neg)
+            linguistic_tools.updateDictionary(d_lm_litigous_master_count, f_litigous)
+            linguistic_tools.updateDictionary(d_master_word_count, f_words)
+            linguistic_tools.updateDictionary(d_lm_harvard_master_count, f_harvard)
         else:
             continue
 

@@ -10,8 +10,11 @@ def updateDictionary(d_master, d_file):
     :param d_file: observation dictionary
     :return: updated master dictionary
     '''
-    for key, value in d_file.items()
-        d_master[key] += value
+    for key, value in d_file.items():
+        try:
+            d_master[key] += value
+        except KeyError:
+            d_master[key] = value
     return d_master
 
 def countWords(document):
@@ -48,7 +51,7 @@ def documentFrequency(l_tf_dict):
             idf_dict[key] += value
     return idf_dict
 
-def countAllWordsInWordList(l_wordlist, d_word):
+def constructWordlistCount(l_wordlist, d_word):
     '''
     :param l_wordlist: wordlist to count words in document
     :param d_word: Count of words in dictionary format
@@ -61,7 +64,7 @@ def countAllWordsInWordList(l_wordlist, d_word):
     return word_count
 
 
-def constructWordListFrequency(l_wordlist, d_word):
+def constructWordlistFrequency(l_wordlist, d_word):
     '''
     constructs the frequency of words in a wordlist for a document
     :param l_wordlist: wordlist to construct

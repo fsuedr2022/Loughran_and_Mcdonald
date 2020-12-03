@@ -7,7 +7,7 @@ def get_file_list(dirName):
         listOfFiles += [os.path.join(dirpath, file) for file in filenames]
     return listOfFiles
 
-def constructOutputFilenames(main_path, filenames)
+def constructOutputFilenames(main_path, filenames):
     output_file_list = []
     for filename in filenames:
         output_file_list.append(os.path.join(main_path, filename))
