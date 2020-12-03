@@ -60,27 +60,53 @@ def mainthread(file):
             cleaned_text = linguistic_tools.parse_document(full_text, purge_tables=True)
             cleaned_text = cleaned_text.upper()
             f_words = linguistic_tools.wordFrequency(cleaned_text)
-            f_neg = linguistic_tools.constructWordlistFrequency(lm_neg_wordlist.lm_negative, f_words)
-            f_pos = linguistic_tools.constructWordlistFrequency(lm_positive.lm_positive, f_words)
-            f_litigous = linguistic_tools.constructWordlistFrequency(lm_litigous.lm_litigous, f_words)
-            f_uncertain = linguistic_tools.constructWordlistFrequency(lm_uncertain.lm_uncertain, f_words)
-            f_harvard = linguistic_tools.constructWordlistFrequency(harvard_wordlist.harvard_neg, f_words)
-
-            linguistic_tools.updateDictionary(d_lm_uncertain_master_count, f_uncertain)
-            linguistic_tools.updateDictionary(d_lm_pos_master_count, f_pos)
-            linguistic_tools.updateDictionary(d_lm_neg_master_count, f_neg)
-            linguistic_tools.updateDictionary(d_lm_litigous_master_count, f_litigous)
-            linguistic_tools.updateDictionary(d_master_word_count, f_words)
-            linguistic_tools.updateDictionary(d_lm_harvard_master_count, f_harvard)
+            return (f_words, header_dict)
             #print('out')
+        else:
+            return False
 
 
 def mp_handler():
     cpu = mp.cpu_count() - 1
+    total_obs = 0
     with futures.ProcessPoolExecutor(max_workers=cpu) as executor:
 
         running = {executor.submit(mainthread, file): file for file in
                tqdm(filelist)}
+
+        for f_words in futures.as_completed(running):
+            f_words = f_words._result
+            if f_words:
+                header_dict = f_words[1]
+                f_words = f_words[0]
+
+                f_neg = linguistic_tools.constructWordlistFrequency(lm_neg_wordlist.lm_negative, f_words)
+                f_pos = linguistic_tools.constructWordlistFrequency(lm_positive.lm_positive, f_words)
+                f_litigous = linguistic_tools.constructWordlistFrequency(lm_litigous.lm_litigous, f_words)
+                f_uncertain = linguistic_tools.constructWordlistFrequency(lm_uncertain.lm_uncertain, f_words)
+                f_harvard = linguistic_tools.constructWordlistFrequency(harvard_wordlist.harvard_neg, f_words)
+
+                output_filenames = ['master_count_{}.json'.format(header_dict['ACCESSION NUMBER']),
+                                    'harvard_count_{}.json'.format(header_dict['ACCESSION NUMBER']),
+                                    'litigous_count_{}.json'.format(header_dict['ACCESSION NUMBER']),
+                                    'neg_count_{}.json'.format(header_dict['ACCESSION NUMBER']),
+                                    'pos_count_{}.json'.format(header_dict['ACCESSION NUMBER']),
+                                    'uncert_count_{}.json'.format(header_dict['ACCESSION NUMBER']),]
+
+                l_data_files = [f_words, f_harvard, f_litigous, f_neg, f_pos, f_uncertain]
+
+                f_l_output_files = os_tools.constructOutputFilenames(os.path.join(OUTPATH, 'LM_DOCS'), output_filenames)
+
+                os_tools.multipleSaveToJson(f_l_output_files, l_data_files)
+
+                linguistic_tools.updateDictionary(d_lm_uncertain_master_count, f_uncertain)
+                linguistic_tools.updateDictionary(d_lm_pos_master_count, f_pos)
+                linguistic_tools.updateDictionary(d_lm_neg_master_count, f_neg)
+                linguistic_tools.updateDictionary(d_lm_litigous_master_count, f_litigous)
+                linguistic_tools.updateDictionary(d_master_word_count, f_words)
+                linguistic_tools.updateDictionary(d_lm_harvard_master_count, f_harvard)
+                total_obs += 1
+                print(total_obs)
 
 if __name__ == '__main__':
     mp_handler()
