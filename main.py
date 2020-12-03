@@ -10,6 +10,8 @@ import harvard_wordlist
 import json
 import cleaning_tools
 from tqdm import tqdm
+import multiprocessing as mp
+from concurrent import futures
 
 from headerParse import runEdgarHeaderSearch
 #construct header search
@@ -42,7 +44,8 @@ def updateMasterCountDictionaries(d_master, d_file):
         d_master[key] += value
 
 
-for file in tqdm(filelist):
+#for file in tqdm(filelist):
+def mainthread(file):
     with open(file, 'r', errors='ignore') as f:
         text = f.readlines(10000)
         header_dict = headerSearch.searchEdgarHeader(textSnippet=text)
@@ -51,10 +54,11 @@ for file in tqdm(filelist):
         header_dict['CENTRAL INDEX KEY'] = cik_header[0]
 
         if int(header_dict.get('CENTRAL INDEX KEY', -99)) in int_list:
-            total_obs += 1
+            #total_obs += 1
             f.seek(0)
             full_text = f.read()
             cleaned_text = linguistic_tools.parse_document(full_text, purge_tables=True)
+            cleaned_text = cleaned_text.upper()
             f_words = linguistic_tools.wordFrequency(cleaned_text)
             f_neg = linguistic_tools.constructWordlistFrequency(lm_neg_wordlist.lm_negative, f_words)
             f_pos = linguistic_tools.constructWordlistFrequency(lm_positive.lm_positive, f_words)
@@ -68,8 +72,18 @@ for file in tqdm(filelist):
             linguistic_tools.updateDictionary(d_lm_litigous_master_count, f_litigous)
             linguistic_tools.updateDictionary(d_master_word_count, f_words)
             linguistic_tools.updateDictionary(d_lm_harvard_master_count, f_harvard)
-        else:
-            continue
+            #print('out')
+
+
+def mp_handler():
+    cpu = mp.cpu_count() - 1
+    with futures.ProcessPoolExecutor(max_workers=cpu) as executor:
+
+        running = {executor.submit(mainthread, file): file for file in
+               tqdm(filelist)}
+
+if __name__ == '__main__':
+    mp_handler()
 
 l_master_data_files = [d_master_word_pct, d_master_word_count, d_lm_harvard_master_count, d_lm_harvard_master_pct, d_lm_litigous_master_count,
                        d_lm_litigous_master_pct, d_lm_neg_master_count, d_lm_neg_master_pct, d_lm_pos_master_count, d_lm_pos_master_pct,
