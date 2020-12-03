@@ -1,4 +1,4 @@
-lm_wordlist  [
+lm_negative = [
 'ABANDON',
 'ABANDONED',
 'ABANDONING',
